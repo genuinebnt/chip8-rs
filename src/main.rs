@@ -1,4 +1,3 @@
-#[allow(arithmetic_overflow)]
 mod chip;
 
 use sdl2::event::Event;
@@ -12,7 +11,9 @@ use std::time::Duration;
 fn render(canvas: &mut WindowCanvas, texture: &mut Texture, buffer: &[u8; 4096], pitch: usize) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
-    texture.update(None, buffer, pitch).expect("cannot update texture");
+    texture
+        .update(None, buffer, pitch)
+        .expect("cannot update texture");
     canvas.copy(texture, None, None).unwrap();
     canvas.present();
 }
@@ -194,7 +195,6 @@ fn main() -> Result<(), String> {
 
     let mut chip = chip::Chip::new();
     chip.load_rom("./test_opcode.ch8");
-
 
     loop {
         let quit = process_input(&mut chip.keypad, &sdl_context);
