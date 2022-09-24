@@ -6,6 +6,7 @@ use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::surface::Surface;
 use sdl2::Sdl;
+use std::error::Error;
 use std::time::Duration;
 
 fn render(canvas: &mut WindowCanvas, texture: &mut Texture, buffer: &[u8; 4096], pitch: usize) {
@@ -167,7 +168,7 @@ fn process_input(keys: &mut [u8; 16], context: &Sdl) -> bool {
     quit
 }
 
-fn main() -> Result<(), String> {
+fn main() -> Result<(), Box<dyn Error>> {
     let sdl_context = sdl2::init()?;
     let video = sdl_context.video()?;
 
@@ -180,18 +181,14 @@ fn main() -> Result<(), String> {
     let window = video
         .window(title, window_width, window_height)
         .position_centered()
-        .build()
-        .expect("Cannot initialize a window");
+        .build()?;
 
-    let mut canvas = window
-        .into_canvas()
-        .build()
-        .expect("cannot create a canvas");
+    let mut canvas = window.into_canvas().build()?;
 
     let texture_creator = canvas.texture_creator();
-    let surface = Surface::new(texture_width, texture_height, PixelFormatEnum::RGB888).unwrap();
+    let surface = Surface::new(texture_width, texture_height, PixelFormatEnum::RGB888)?;
 
-    let mut texture = Texture::from_surface(&surface, &texture_creator).unwrap();
+    let mut texture = Texture::from_surface(&surface, &texture_creator)?;
 
     let mut chip = chip::Chip::new();
     chip.load_rom("./test_opcode.ch8");
