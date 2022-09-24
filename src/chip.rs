@@ -19,7 +19,7 @@ pub struct Chip {
     pub delay_timer: u8,
     pub sound_timer: u8,
     pub keypad: [u8; 16],
-    pub video: [u32; VIDEO_WIDTH as usize * VIDEO_HEIGHT as usize],
+    pub video: [u8; VIDEO_WIDTH as usize * VIDEO_HEIGHT as usize],
     pub opcode: u16,
 }
 
@@ -80,6 +80,8 @@ impl Chip {
 
         self.pc += 2;
 
+        println!("Opcode: {:x}", self.opcode);
+
         match (self.opcode & 0xF000) >> 12 {
             0x0000 => match self.opcode & 0x000F {
                 0x0000 => self.op_00e0(),
@@ -89,6 +91,7 @@ impl Chip {
             0x0001 => self.op_1nnn(),
             0x0002 => self.op_2nnn(),
             0x0003 => self.op_3xkk(),
+            0x0004 => self.op_4xkk(),
             0x0005 => self.op_5xy0(),
             0x0006 => self.op_6xkk(),
             0x0007 => self.op_7xkk(),
@@ -123,7 +126,7 @@ impl Chip {
                 0x0065 => self.op_fx65(),
                 _ => unreachable!(),
             },
-            _ => unreachable!(),
+            _ => println!("Ran instruction: {:x}", self.opcode),
         }
 
         if self.delay_timer > 0 {
@@ -160,6 +163,15 @@ impl Chip {
         let vx: u8 = ((self.opcode & 0x0F00) >> 8) as u8;
         let byte: u8 = (self.opcode & 0x00FF) as u8;
 
+        if self.registers[vx as usize] == byte {
+            self.pc += 2;
+        }
+    }
+
+    fn op_4xkk(&mut self) {
+        let vx: u8 = ((self.opcode & 0x0F00) >> 8) as u8;
+        let byte: u8 = (self.opcode & 0x00FF) as u8;
+
         if self.registers[vx as usize] != byte {
             self.pc += 2;
         }
@@ -182,10 +194,11 @@ impl Chip {
     }
 
     fn op_7xkk(&mut self) {
-        let vx: u8 = ((self.opcode & 0x0F00) >> 8) as u8;
-        let byte: u8 = (self.opcode & 0x00FF) as u8;
+        let vx = ((self.opcode & 0x0F00) >> 8) as u16;
+        let byte = (self.opcode & 0x00FF) as u16;
 
-        self.registers[vx as usize] += byte;
+        let result = vx + byte;
+        self.registers[vx as usize] = result as u8;
     }
 
     fn op_8xy0(&mut self) {
@@ -220,7 +233,7 @@ impl Chip {
         let vx: u8 = ((self.opcode & 0x0F00) >> 8) as u8;
         let vy: u8 = ((self.opcode & 0x00F0) >> 4) as u8;
 
-        let sum: u16 = (self.registers[vx as usize] + self.registers[vy as usize]) as u16;
+        let sum: u16 = self.registers[vx as usize] as u16 + self.registers[vy as usize] as u16;
 
         if sum > 255 {
             self.registers[0xF] = 1;
@@ -232,8 +245,8 @@ impl Chip {
     }
 
     fn op_8xy5(&mut self) {
-        let vx: u8 = ((self.opcode & 0x0F00) >> 8) as u8;
-        let vy: u8 = ((self.opcode & 0x00F0) >> 4) as u8;
+        let vx = ((self.opcode & 0x0F00) >> 8) as u16;
+        let vy = ((self.opcode & 0x00F0) >> 4) as u16;
 
         if self.registers[vx as usize] > self.registers[vy as usize] {
             self.registers[0xF] = 1;
@@ -241,7 +254,9 @@ impl Chip {
             self.registers[0xF] = 0;
         }
 
-        self.registers[vx as usize] += self.registers[vy as usize];
+        let result = self.registers[vx as usize] as u16 + self.registers[vy as usize] as u16;
+
+        self.registers[vx as usize] += result as u8;
     }
 
     fn op_8xy6(&mut self) {
@@ -302,8 +317,8 @@ impl Chip {
     }
 
     fn op_dxyn(&mut self) {
-        let vx: u8 = ((self.opcode & 0x0F00) >> 8) as u8;
-        let vy: u8 = ((self.opcode & 0x00F0) >> 4) as u8;
+        let vx = ((self.opcode & 0x0F00) >> 8) as u8;
+        let vy = ((self.opcode & 0x00F0) >> 4) as u8;
 
         let height = self.opcode & 0x000F;
 
@@ -320,15 +335,16 @@ impl Chip {
                 let screen_pixel = &mut self.video
                     [(y_pos as usize + row) * VIDEO_WIDTH as usize + (x_pos as usize + col)];
 
-                if sprite_pixel == 1 {
-                    if *screen_pixel == 0xFFFFFFFF {
+                if sprite_pixel != 0 {
+                    if *screen_pixel == 0xFF {
                         self.registers[0xF] = 1;
                     }
 
-                    *screen_pixel ^= 0xFFFFFFFF;
+                    *screen_pixel ^= 0xFF;
                 }
             }
         }
+        println!("Draw ran");
     }
 
     fn op_ex9e(&mut self) {
@@ -396,7 +412,7 @@ impl Chip {
     }
 
     fn op_fx33(&mut self) {
-        let vx: u8 = ((self.opcode & 0xF000) >> 8) as u8;
+        let vx: u8 = ((self.opcode & 0x0F00) >> 8) as u8;
 
         let mut value = self.registers[vx as usize];
 
@@ -407,7 +423,8 @@ impl Chip {
     }
 
     fn op_fx55(&mut self) {
-        let vx: u8 = ((self.opcode & 0xF000) >> 8) as u8;
+        let vx = ((self.opcode & 0x0F00) >> 8) as u8;
+        println!("{}", vx);
 
         for i in 0..=vx as usize {
             self.memory[self.index as usize + i] = self.registers[i];
@@ -415,7 +432,7 @@ impl Chip {
     }
 
     fn op_fx65(&mut self) {
-        let vx: u8 = ((self.opcode & 0xF000) >> 8) as u8;
+        let vx: u8 = ((self.opcode & 0x0F00) >> 8) as u8;
 
         for i in 0..=vx as usize {
             self.registers[i] = self.memory[self.index as usize + i];

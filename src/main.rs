@@ -1,22 +1,33 @@
 mod chip;
 
+use chip::{VIDEO_HEIGHT, VIDEO_WIDTH};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::{Color, PixelFormatEnum};
-use sdl2::render::{Texture, WindowCanvas};
-use sdl2::surface::Surface;
+use sdl2::pixels::Color;
+use sdl2::rect::Rect;
+use sdl2::render::WindowCanvas;
 use sdl2::Sdl;
 use std::error::Error;
 use std::time::Duration;
 
-fn render(canvas: &mut WindowCanvas, texture: &mut Texture, buffer: &[u8; 4096], pitch: usize) {
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
-    canvas.clear();
-    texture
-        .update(None, buffer, pitch)
-        .expect("cannot update texture");
-    canvas.copy(texture, None, None).unwrap();
-    canvas.present();
+const SCALE: u32 = 15;
+
+impl chip::Chip {
+    fn display_render(&mut self, canvas: &mut WindowCanvas) {
+        canvas.set_draw_color(Color::RGB(0, 0, 0));
+        canvas.clear();
+        canvas.set_draw_color(Color::RGB(255, 255, 255));
+        for (i, value) in self.video.iter().enumerate() {
+            if *value != 0 {
+                let x = (i % VIDEO_WIDTH as usize) as u32;
+                let y = (i / VIDEO_WIDTH as usize) as u32;
+
+                let rect = Rect::new((x * SCALE) as i32, (y * SCALE) as i32, SCALE, SCALE);
+                canvas.fill_rect(rect).unwrap();
+            }
+        }
+        canvas.present();
+    }
 }
 
 fn process_input(keys: &mut [u8; 16], context: &Sdl) -> bool {
@@ -173,41 +184,33 @@ fn main() -> Result<(), Box<dyn Error>> {
     let video = sdl_context.video()?;
 
     let title = "Chip8 emulator";
-    let window_width = 640;
-    let window_height = 480;
-    let texture_width = 640;
-    let texture_height = 480;
+    let window_width = 1000;
+    let window_height = 500;
 
     let window = video
         .window(title, window_width, window_height)
         .position_centered()
+        .opengl()
         .build()?;
 
-    let mut canvas = window.into_canvas().build()?;
-
-    let texture_creator = canvas.texture_creator();
-    let surface = Surface::new(texture_width, texture_height, PixelFormatEnum::RGB888)?;
-
-    let mut texture = Texture::from_surface(&surface, &texture_creator)?;
+    let mut canvas = window.into_canvas().present_vsync().build()?;
+    canvas.clear();
+    canvas.present();
 
     let mut chip = chip::Chip::new();
-    chip.load_rom("./test_opcode.ch8");
+    chip.load_rom("roms/games/Tetris [Fran Dachille, 1991].ch8");
+
+    let sleep_duration = Duration::from_millis(2);
 
     loop {
         let quit = process_input(&mut chip.keypad, &sdl_context);
 
-        println!("Ran");
-
         chip.cycle();
-
-        render(
-            &mut canvas,
-            &mut texture,
-            &chip.memory,
-            chip::VIDEO_WIDTH as usize,
-        );
+        println!("{:?}", chip.keypad);
+        chip.display_render(&mut canvas);
 
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 20));
+        //std::thread::sleep(sleep_duration);
 
         if quit {
             break;
