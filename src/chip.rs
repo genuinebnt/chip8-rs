@@ -58,8 +58,8 @@ impl Chip {
             opcode: 0,
         };
 
-        for i in 0..FONT_SET_SIZE as usize {
-            chip.memory[FONT_SET_START_ADDRESS as usize + i] = font_set[i];
+        for (i, item) in font_set.iter().enumerate().take(FONT_SET_SIZE as usize) {
+            chip.memory[FONT_SET_START_ADDRESS as usize + i] = *item;
         }
 
         chip
@@ -126,7 +126,7 @@ impl Chip {
                 0x0065 => self.op_fx65(),
                 _ => unreachable!(),
             },
-            _ => println!("Ran instruction: {:x}", self.opcode),
+            _ => unreachable!("Ran undefined instruction {:x}", self.opcode),
         }
 
         if self.delay_timer > 0 {
@@ -194,11 +194,11 @@ impl Chip {
     }
 
     fn op_7xkk(&mut self) {
-        let vx = ((self.opcode & 0x0F00) >> 8) as u16;
-        let byte = (self.opcode & 0x00FF) as u16;
+        let vx = ((self.opcode & 0x0F00) >> 8) as usize;
+        let byte = (self.opcode & 0x00FF) as u8;
 
-        let result = vx + byte;
-        self.registers[vx as usize] = result as u8;
+        let (result, _) = self.registers[vx].overflowing_add(byte);
+        self.registers[vx] = result;
     }
 
     fn op_8xy0(&mut self) {
@@ -245,8 +245,8 @@ impl Chip {
     }
 
     fn op_8xy5(&mut self) {
-        let vx = ((self.opcode & 0x0F00) >> 8) as u16;
-        let vy = ((self.opcode & 0x00F0) >> 4) as u16;
+        let vx = ((self.opcode & 0x0F00) >> 8) as u8;
+        let vy = ((self.opcode & 0x00F0) >> 4) as u8;
 
         if self.registers[vx as usize] > self.registers[vy as usize] {
             self.registers[0xF] = 1;
@@ -254,9 +254,9 @@ impl Chip {
             self.registers[0xF] = 0;
         }
 
-        let result = self.registers[vx as usize] as u16 + self.registers[vy as usize] as u16;
+        let (result, _) = self.registers[vx as usize].overflowing_sub(self.registers[vy as usize]);
 
-        self.registers[vx as usize] += result as u8;
+        self.registers[vx as usize] = result;
     }
 
     fn op_8xy6(&mut self) {
@@ -344,7 +344,6 @@ impl Chip {
                 }
             }
         }
-        println!("Draw ran");
     }
 
     fn op_ex9e(&mut self) {
@@ -375,15 +374,18 @@ impl Chip {
 
     fn op_fx0a(&mut self) {
         let vx: u8 = ((self.opcode & 0x0F00) >> 8) as u8;
+        let mut pressed = false;
 
         for (i, key) in self.keypad.iter().enumerate() {
-            if *key == 1 {
+            if *key != 0 {
                 self.registers[vx as usize] = i as u8;
-                return;
+                pressed = true;
             }
         }
 
-        self.pc -= 2;
+        if !pressed {
+            self.pc -= 2;
+        }
     }
 
     fn op_fx15(&mut self) {
@@ -417,6 +419,9 @@ impl Chip {
         let mut value = self.registers[vx as usize];
 
         self.memory[self.index as usize + 2] = value % 10;
+        value /= 10;
+
+        self.memory[self.index as usize + 1] = value % 10;
         value /= 10;
 
         self.memory[self.index as usize] = value % 10;

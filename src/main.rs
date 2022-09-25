@@ -1,6 +1,6 @@
 mod chip;
 
-use chip::{VIDEO_HEIGHT, VIDEO_WIDTH};
+use chip::VIDEO_WIDTH;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -200,17 +200,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut chip = chip::Chip::new();
     chip.load_rom("roms/games/Tetris [Fran Dachille, 1991].ch8");
 
-    let sleep_duration = Duration::from_millis(2);
-
     loop {
         let quit = process_input(&mut chip.keypad, &sdl_context);
 
         chip.cycle();
-        println!("{:?}", chip.keypad);
+
         chip.display_render(&mut canvas);
 
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 20));
-        //std::thread::sleep(sleep_duration);
 
         if quit {
             break;
