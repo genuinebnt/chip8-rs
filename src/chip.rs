@@ -67,8 +67,8 @@ impl Chip {
 
     pub fn load_rom(&mut self, filename: &str) {
         let contents = fs::read(filename).unwrap();
-        for i in 0..contents.len() {
-            self.memory[START_ADDRESS as usize + i] = contents[i];
+        for (i, item) in contents.iter().enumerate() {
+            self.memory[START_ADDRESS as usize + i] = *item;
         }
     }
 
@@ -330,7 +330,7 @@ impl Chip {
         for row in 0..height as usize {
             let sprite_byte = self.memory[self.index as usize + row as usize];
 
-            for col in 0..8 as usize {
+            for col in 0..8_usize {
                 let sprite_pixel = sprite_byte & (0x80 >> col);
                 let screen_pixel = &mut self.video
                     [(y_pos as usize + row) * VIDEO_WIDTH as usize + (x_pos as usize + col)];
@@ -403,7 +403,7 @@ impl Chip {
     fn op_fx1e(&mut self) {
         let vx: u8 = ((self.opcode & 0x0F00) >> 8) as u8;
 
-        self.index = self.index + self.registers[vx as usize] as u16;
+        self.index += self.registers[vx as usize] as u16;
     }
 
     fn op_fx29(&mut self) {
