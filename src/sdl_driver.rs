@@ -6,7 +6,10 @@ use sdl2::render::WindowCanvas;
 use sdl2::Sdl;
 use std::error::Error;
 
-use crate::chip::{Chip, VIDEO_WIDTH};
+use crate::{
+    chip::{Chip, VIDEO_WIDTH},
+    keyboard::key2btn,
+};
 
 pub struct SdlDriver {
     pub context: Sdl,
@@ -64,137 +67,19 @@ impl SdlDriver {
                     ..
                 } => quit = true,
                 Event::KeyDown {
-                    keycode: Some(Keycode::X),
-                    ..
-                } => keys[0] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Kp1),
-                    ..
-                } => keys[1] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Kp2),
-                    ..
-                } => keys[2] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Kp3),
-                    ..
-                } => keys[3] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Q),
-                    ..
-                } => keys[4] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::W),
-                    ..
-                } => keys[5] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::E),
-                    ..
-                } => keys[6] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::A),
-                    ..
-                } => keys[7] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::S),
-                    ..
-                } => keys[8] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::D),
-                    ..
-                } => keys[9] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Z),
-                    ..
-                } => keys[10] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::C),
-                    ..
-                } => keys[11] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Kp4),
-                    ..
-                } => keys[12] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::R),
-                    ..
-                } => keys[13] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::F),
-                    ..
-                } => keys[14] = 1,
-                Event::KeyDown {
-                    keycode: Some(Keycode::V),
-                    ..
-                } => keys[15] = 1,
+                    keycode: Some(key), ..
+                } => {
+                    if let Some(key) = key2btn(key) {
+                        keys[key as usize] = 1;
+                    }
+                }
                 Event::KeyUp {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => quit = true,
-                Event::KeyUp {
-                    keycode: Some(Keycode::X),
-                    ..
-                } => keys[0] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::Kp1),
-                    ..
-                } => keys[1] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::Kp2),
-                    ..
-                } => keys[2] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::Kp3),
-                    ..
-                } => keys[3] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::Q),
-                    ..
-                } => keys[4] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::W),
-                    ..
-                } => keys[5] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::E),
-                    ..
-                } => keys[6] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::A),
-                    ..
-                } => keys[7] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::S),
-                    ..
-                } => keys[8] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::D),
-                    ..
-                } => keys[9] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::Z),
-                    ..
-                } => keys[10] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::C),
-                    ..
-                } => keys[11] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::Kp4),
-                    ..
-                } => keys[12] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::R),
-                    ..
-                } => keys[13] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::F),
-                    ..
-                } => keys[14] = 1,
-                Event::KeyUp {
-                    keycode: Some(Keycode::V),
-                    ..
-                } => keys[15] = 1,
+                    keycode: Some(key), ..
+                } => {
+                    if let Some(key) = key2btn(key) {
+                        keys[key as usize] = 0;
+                    }
+                }
                 _ => {}
             }
         }

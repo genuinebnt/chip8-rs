@@ -1,4 +1,5 @@
 mod chip;
+mod keyboard;
 mod sdl_driver;
 
 use std::error::Error;
@@ -17,7 +18,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         sdl_driver.render(&mut chip, 15);
 
-        std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 20));
+        std::thread::sleep(Duration::new(0, 2_000_000 as u32));
 
         if quit {
             break;
