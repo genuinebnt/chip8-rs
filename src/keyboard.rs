@@ -1,6 +1,6 @@
 use sdl2::keyboard::Keycode;
 
-pub fn key2btn(key: Keycode) -> Option<u32> {
+pub fn key2btn(key: Keycode) -> Option<usize> {
     match key {
         Keycode::Num1 => Some(0x1),
         Keycode::Num2 => Some(0x2),

@@ -1,4 +1,5 @@
 mod chip;
+mod debugger;
 mod keyboard;
 mod sdl_driver;
 
@@ -9,7 +10,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut sdl_driver = sdl_driver::SdlDriver::new()?;
 
     let mut chip = chip::Chip::new();
-    chip.load_rom("roms/games/Tetris [Fran Dachille, 1991].ch8");
+    chip.load_rom("roms/games/cave.ch8");
 
     loop {
         let quit = sdl_driver.process_input(&mut chip.keypad);
@@ -18,7 +19,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         sdl_driver.render(&mut chip, 15);
 
-        std::thread::sleep(Duration::new(0, 2_000_000 as u32));
+        std::thread::sleep(Duration::new(0, 10_000_000 as u32));
 
         if quit {
             break;

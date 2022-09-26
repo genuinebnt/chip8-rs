@@ -70,14 +70,16 @@ impl SdlDriver {
                     keycode: Some(key), ..
                 } => {
                     if let Some(key) = key2btn(key) {
-                        keys[key as usize] = 1;
+                        println!("Key pressed: {}", key);
+                        keys[key] = 1;
                     }
                 }
                 Event::KeyUp {
                     keycode: Some(key), ..
                 } => {
                     if let Some(key) = key2btn(key) {
-                        keys[key as usize] = 0;
+                        println!("Key released: {}", key);
+                        keys[key] = 0;
                     }
                 }
                 _ => {}

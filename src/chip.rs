@@ -2,6 +2,8 @@ use rand::prelude::random;
 use std::fmt::Debug;
 use std::fs;
 
+use crate::debugger;
+
 const START_ADDRESS: u16 = 0x200;
 const FONT_SET_SIZE: u32 = 80;
 const FONT_SET_START_ADDRESS: u32 = 0x50;
@@ -80,7 +82,14 @@ impl Chip {
 
         self.pc += 2;
 
-        println!("Opcode: {:x}", self.opcode);
+        let digit1 = (self.opcode & 0xF000) >> 12;
+        let digit2 = (self.opcode & 0x0F00) >> 8;
+        let digit3 = (self.opcode & 0x00F0) >> 4;
+        let digit4 = self.opcode & 0x000F;
+
+        let mut cpu_state = debugger::CpuState::new();
+
+        cpu_state.show_cpu_state(&*self, digit1, digit2, digit3, digit4);
 
         match (self.opcode & 0xF000) >> 12 {
             0x0000 => match self.opcode & 0x000F {
