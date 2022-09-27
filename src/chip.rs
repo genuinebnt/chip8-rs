@@ -80,8 +80,6 @@ impl Chip {
 
         self.opcode = (hi_byte as u16) << 8 | lo_byte as u16;
 
-        self.pc += 2;
-
         let digit1 = (self.opcode & 0xF000) >> 12;
         let digit2 = (self.opcode & 0x0F00) >> 8;
         let digit3 = (self.opcode & 0x00F0) >> 4;
@@ -90,6 +88,8 @@ impl Chip {
         let mut cpu_state = debugger::CpuState::new();
 
         cpu_state.show_cpu_state(&*self, digit1, digit2, digit3, digit4);
+
+        self.pc += 2;
 
         match (self.opcode & 0xF000) >> 12 {
             0x0000 => match self.opcode & 0x000F {
